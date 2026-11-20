@@ -66,6 +66,8 @@ The add-on ID is `screen-capture-and-record@penguin-pants`, from the earlier nam
 
 The Chrome build is made from `src/` by `scripts/build-chrome.js`. It uses Manifest V3, a service worker background (`chrome/background.js`) and a shim that sets `browser` to `chrome` (`chrome/browser-shim.js`). It records like the Firefox build: Chrome can give tab sound to screen sharing, but this build does not use it yet. To change the shortcut, open `chrome://extensions/shortcuts`.
 
+To publish on the Chrome Web Store, use [store/chrome/LISTING.md](store/chrome/LISTING.md) (copy-paste answers for each dashboard tab) and the images in `store/chrome/`. The privacy policy is [PRIVACY.md](PRIVACY.md).
+
 ## Manual test in Firefox
 
 The automated tests run in Chromium. Do these checks in Firefox after a change to the recorder:

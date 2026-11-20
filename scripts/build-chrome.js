@@ -4,8 +4,9 @@
 // - manifest.json: Manifest V3 (service worker, "action", no gecko keys).
 // - background.js: replaced by chrome/background.js.
 // - HTML pages: chrome/browser-shim.js loads first (`browser` = `chrome`).
-// - Text: "Firefox" becomes "Chrome", and the shortcut hint points to the
-//   Chrome shortcut page.
+// - Text: "Firefox" becomes "Chrome", the minimum version is Chrome's, the
+//   shortcut hint points to the Chrome shortcut page, and the tab sound
+//   hint is true for Chrome.
 'use strict';
 
 const fs = require('node:fs');
@@ -16,6 +17,22 @@ const root = path.join(__dirname, '..');
 const src = path.join(root, 'src');
 const dist = path.join(root, 'dist');
 const out = path.join(dist, 'chrome');
+const MIN_CHROME = '120';
+
+// Text changes for Chrome. Each `from` must be found in at least one file,
+// so a change to src/ cannot make one stop working without notice.
+const REPLACEMENTS = [
+  {
+    from: 'open <strong>about:addons</strong>, click the gear icon, then <strong>Manage Extension Shortcuts</strong>',
+    to: 'open <strong>chrome://extensions/shortcuts</strong>'
+  },
+  {
+    from: 'Firefox does not give the sound of a tab to screen sharing.',
+    to: 'This recorder does not record the sound of a tab.'
+  },
+  { from: /Firefox 130/g, to: `Chrome ${MIN_CHROME}` },
+  { from: /Firefox/g, to: 'Chrome' }
+];
 
 function chromeManifest(firefox) {
   const manifest = {
@@ -23,7 +40,7 @@ function chromeManifest(firefox) {
     name: firefox.name,
     version: firefox.version,
     description: firefox.description,
-    minimum_chrome_version: '120',
+    minimum_chrome_version: MIN_CHROME,
     icons: firefox.icons,
     permissions: firefox.permissions,
     background: { service_worker: 'background.js' },
@@ -37,11 +54,14 @@ function chromeManifest(firefox) {
   return manifest;
 }
 
+const used = new Set();
 function chromeText(text) {
-  return text
-    .replace('open <strong>about:addons</strong>, click the gear icon, then <strong>Manage Extension Shortcuts</strong>',
-      'open <strong>chrome://extensions/shortcuts</strong>')
-    .replace(/Firefox/g, 'Chrome');
+  for (const replacement of REPLACEMENTS) {
+    const next = text.replace(replacement.from, replacement.to);
+    if (next !== text) used.add(replacement);
+    text = next;
+  }
+  return text;
 }
 
 fs.rmSync(out, { recursive: true, force: true });
@@ -61,6 +81,10 @@ for (const name of fs.readdirSync(out)) {
     text = text.replace('<script src="common.js"></script>', '<script src="browser-shim.js"></script>\n  <script src="common.js"></script>');
   }
   fs.writeFileSync(file, text);
+}
+
+for (const replacement of REPLACEMENTS) {
+  if (!used.has(replacement)) throw new Error(`Text to replace not found in src/: ${replacement.from}`);
 }
 
 const zip = path.join(dist, `screen-recorder-chrome-${firefox.version}.zip`);
