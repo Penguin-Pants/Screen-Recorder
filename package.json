@@ -9,7 +9,8 @@
     "lint": "web-ext lint --source-dir src",
     "start": "web-ext run --source-dir src",
     "build": "web-ext build --source-dir src --artifacts-dir dist --overwrite-dest",
-    "vendor": "node scripts/vendor.js"
+    "vendor": "node scripts/vendor.js",
+    "build:chrome": "node scripts/build-chrome.js"
   },
   "devDependencies": {
     "mediabunny": "1.61.0",
