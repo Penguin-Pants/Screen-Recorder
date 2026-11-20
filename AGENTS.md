@@ -33,6 +33,7 @@ Firefox extension that records the screen with webcam and microphone and saves s
 - Source: `src/` (`background.js`, `common.js`, `recorder.*`, `options.*`, `tokens.css`)
 - Tests: `test/` (unit tests in Node, page tests in Chromium with `test/browser-stub.js`)
 - Chrome build files: `chrome/` (service worker background, `browser` shim)
+- Chrome Web Store listing: `store/chrome/` (answers in `LISTING.md`, images). Privacy policy: `PRIVACY.md`
 - Scripts: `scripts/vendor.js`, `scripts/build-chrome.js`
 
 ## Environment variables

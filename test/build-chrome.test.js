@@ -41,6 +41,14 @@ test('Chrome build', async (t) => {
     }
   });
 
+  await t.test('text makes no Firefox-only claims about Chrome', () => {
+    const html = fs.readFileSync(path.join(out, 'recorder.html'), 'utf8');
+    assert.ok(!html.includes('Chrome does not give the sound of a tab'), 'Chrome can share tab sound');
+    const js = fs.readFileSync(path.join(out, 'recorder.js'), 'utf8');
+    assert.ok(!js.includes('Chrome 130'), `minimum is Chrome ${manifest.minimum_chrome_version}`);
+    assert.ok(js.includes(`Chrome ${manifest.minimum_chrome_version} or later`));
+  });
+
   await t.test('ZIP is made', () => {
     assert.ok(fs.existsSync(path.join(root, 'dist', `screen-recorder-chrome-${firefox.version}.zip`)));
   });
