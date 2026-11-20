@@ -43,6 +43,7 @@ npm install
 | `npm run lint` | Run `web-ext lint` on `src/` |
 | `npm start` | Start Firefox with the extension loaded (`web-ext run`) |
 | `npm run build` | Make an unsigned ZIP in `dist/` |
+| `npm run build:chrome` | Make the Chrome build: `dist/chrome/` and `dist/screen-recorder-chrome-<version>.zip` |
 | `npm run vendor` | Copy third-party browser code from `node_modules` to `src/vendor` |
 
 Page tests run the extension pages in Chromium, served over a local HTTP server, with a stub of the Firefox `browser` API (`test/browser-stub.js`) and fake screen, camera and microphone streams. Set `CHROMIUM_PATH` if Chromium is not at the Playwright default path. Without Chromium, the page tests are skipped.
@@ -56,6 +57,14 @@ Page tests run the extension pages in Chromium, served over a local HTTP server,
 A temporary add-on is removed when Firefox closes. To install it permanently, sign the build on [addons.mozilla.org](https://addons.mozilla.org/developers/) (unlisted is OK), or use Firefox Developer Edition or Nightly with `xpinstall.signatures.required` set to `false`.
 
 The add-on ID is `screen-capture-and-record@penguin-pants`, from the earlier name of the extension (Screen Capture and Record). Keep it: Firefox and addons.mozilla.org use the ID to update installed copies.
+
+## Load the extension in Chrome
+
+1. Run `npm run build:chrome`, or unzip `screen-recorder-chrome-<version>.zip` into a folder.
+2. Open `chrome://extensions` and turn on **Developer mode**.
+3. Click **Load unpacked** and select `dist/chrome` (or the unzipped folder).
+
+The Chrome build is made from `src/` by `scripts/build-chrome.js`. It uses Manifest V3, a service worker background (`chrome/background.js`) and a shim that sets `browser` to `chrome` (`chrome/browser-shim.js`). It records like the Firefox build: Chrome can give tab sound to screen sharing, but this build does not use it yet. To change the shortcut, open `chrome://extensions/shortcuts`.
 
 ## Manual test in Firefox
 

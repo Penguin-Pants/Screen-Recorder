@@ -12,7 +12,7 @@ Firefox extension that records the screen with webcam and microphone and saves s
 - JavaScript (plain, no bundler or transpiler). Manifest V2 Firefox extension (`src/manifest.json`), Firefox 130 or later.
 - Mediabunny 1.61.0 (vendored in `src/vendor/mediabunny`) for duration index, camera bubble and smaller copies.
 - Dev tools: Node.js 18 or later, `web-ext`, `node:test`, `playwright-core` (Chromium page tests).
-- Hosting: none. Distribution by signed build on addons.mozilla.org (unlisted) or temporary load.
+- Hosting: none. Distribution by signed build on addons.mozilla.org (unlisted) or temporary load. Chrome: load unpacked from the Chrome build.
 
 ## Commands
 
@@ -23,6 +23,7 @@ Firefox extension that records the screen with webcam and microphone and saves s
 - Lint: `npm run lint` (runs `web-ext lint --source-dir src`)
 - Type check: none found
 - Build: `npm run build` (unsigned ZIP in `dist/`)
+- Build for Chrome: `npm run build:chrome` (Manifest V3 copy in `dist/chrome/` and a ZIP, from `src/` and `chrome/`)
 - Vendor update: `npm run vendor` (copies Mediabunny from `node_modules` to `src/vendor`)
 
 ## Key paths
@@ -31,7 +32,8 @@ Firefox extension that records the screen with webcam and microphone and saves s
 - Design spec: none found (`docs/REVERSE-ENGINEERING.md` is the report on the original extension)
 - Source: `src/` (`background.js`, `common.js`, `recorder.*`, `options.*`, `tokens.css`)
 - Tests: `test/` (unit tests in Node, page tests in Chromium with `test/browser-stub.js`)
-- Scripts: `scripts/vendor.js`
+- Chrome build files: `chrome/` (service worker background, `browser` shim)
+- Scripts: `scripts/vendor.js`, `scripts/build-chrome.js`
 
 ## Environment variables
 
