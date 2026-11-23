@@ -1015,6 +1015,45 @@ test('an MP4 copy with Opus sound shows a note about players', { skip }, async (
   await context.close();
 });
 
+test('an MP4 copy with AAC sound uses a bitrate that the Windows AAC encoder accepts', { skip }, async () => {
+  // Chrome on Windows encodes AAC only at 96, 128, 160 or 192 kbps
+  // (media/gpu/windows/mf_audio_encoder.cc). Test Chromium has no AAC
+  // encoder, so this one keeps the bitrate it gets and then fails.
+  const { page, context } = await openRecorder(() => {
+    const WINDOWS_AAC_BITRATES = [96000, 128000, 160000, 192000];
+    window.__aacBitrates = [];
+    const video = VideoEncoder.isConfigSupported.bind(VideoEncoder);
+    VideoEncoder.isConfigSupported = async (config) =>
+      (config.codec.startsWith('avc') ? { supported: true, config } : video(config));
+    const Real = AudioEncoder;
+    window.AudioEncoder = class extends Real {
+      static async isConfigSupported(config) {
+        if (!config.codec.startsWith('mp4a')) return Real.isConfigSupported(config);
+        return { supported: WINDOWS_AAC_BITRATES.includes(config.bitrate ?? 96000), config };
+      }
+      constructor(init) {
+        super(init);
+        this.onError = init.error;
+      }
+      configure(config) {
+        if (!config.codec.startsWith('mp4a')) return super.configure(config);
+        window.__aacBitrates.push(config.bitrate);
+        setTimeout(() => this.onError(new DOMException('No AAC encoder in the test browser.', 'NotSupportedError')));
+      }
+    };
+  });
+  await page.check('#micCheck');
+  await record(page, 1500);
+  await page.check('#presets input[value="tiny"]');
+  await page.selectOption('#formatSelect', 'mp4');
+  assert.equal(await page.$eval('#formatSelect', (select) => select.selectedOptions[0].textContent), 'MP4 (plays in more apps)');
+  await page.click('#saveBtn');
+  await page.waitForFunction(() => !document.getElementById('saveBtn').disabled &&
+    document.getElementById('message').classList.contains('show'), null, { timeout: 60000 });
+  assert.deepEqual(await page.evaluate(() => window.__aacBitrates), [96000], 'voice sound at the lowest accepted AAC bitrate');
+  await context.close();
+});
+
 test('ending the share during the countdown keeps the camera and the microphone open', { skip }, async () => {
   const { page, context } = await openRecorder(() => { window.__store['setting.camera'] = true; });
   await page.check('#micCheck');
