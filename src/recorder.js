@@ -1102,9 +1102,10 @@ async function detectExportSupport(rec) {
     if (mp4Video) {
       // AAC sound plays in the most apps, but Firefox cannot encode AAC.
       // Then the MP4 file has Opus sound (see updateFormatNote).
-      const mp4Audio = rec.hasAudio ? (await mb.getFirstEncodableAudioCodec(['aac'])) || 'opus' : null;
+      const aacBitrate = rec.hasAudio ? await findAacBitrate(mb, rec.audioBitsPerSecond || VOICE_AUDIO_BITS_PER_SECOND) : null;
+      const mp4Audio = rec.hasAudio ? (aacBitrate ? 'aac' : 'opus') : null;
       const label = mp4Audio === 'opus' ? 'MP4 (H.264 video, Opus sound)' : 'MP4 (plays in more apps)';
-      formats.push({ id: 'mp4', label, container: 'mp4', videoCodecs: mp4Codecs, videoCodec: mp4Video, audioCodec: mp4Audio });
+      formats.push({ id: 'mp4', label, container: 'mp4', videoCodecs: mp4Codecs, videoCodec: mp4Video, audioCodec: mp4Audio, audioBitrate: aacBitrate });
     }
     // With the camera, "Full size" encodes at the size of the recording,
     // which can be larger than the size above (for example 4K). Some
@@ -1119,6 +1120,18 @@ async function detectExportSupport(rec) {
     console.warn('Could not check the video encoders:', error);
   }
   return { library: true, formats };
+}
+
+// The AAC bitrate for the sound of an MP4 copy: the lowest bitrate at or
+// above the recorded one that this browser can encode, or null. Some AAC
+// encoders take only some bitrates. Chrome on Windows takes only 96, 128,
+// 160 or 192 kbps (media/gpu/windows/mf_audio_encoder.cc in Chromium).
+async function findAacBitrate(mb, wanted) {
+  const candidates = [wanted, 96000, 128000, 160000, 192000].filter((bitrate) => bitrate >= wanted);
+  for (const bitrate of new Set(candidates)) {
+    if (await mb.canEncodeAudio('aac', { bitrate })) return bitrate;
+  }
+  return null;
 }
 
 function canTranscode() {
@@ -1526,7 +1539,7 @@ async function saveRecording(choiceId = selectedChoiceId()) {
         // a new encode.) AAC sound for MP4 needs a new encode.
         trackOptions.audio = format.audioCodec === 'opus'
           ? { codec: 'opus' }
-          : { codec: format.audioCodec, bitrate: plan.audioBitsPerSecond };
+          : { codec: format.audioCodec, bitrate: format.audioBitrate };
       }
       blob = await convertRecording(trackOptions, format.container, cameraOn());
       if (choice.id !== 'original') suffix = `-${plan.height}p`;
